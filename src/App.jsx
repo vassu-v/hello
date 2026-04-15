@@ -1,36 +1,34 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Grid from './components/Grid';
 import Legend from './components/Legend';
-import DistrictView from './components/DistrictView';
 import { validatePuzzle, CLUE_TYPES } from './logic/puzzleEngine';
-import { getProgression, recordSolve } from './logic/progression';
 
 const App = () => {
-  const gridSize = 5;
+  const gridSize = 6;
   const [zones, setZones] = useState([]);
   const [isWon, setIsWon] = useState(false);
-  const [progression, setProgression] = useState(getProgression());
 
-  // Static daily puzzle for MVP
+  // Daily puzzle clues based on the reference image colors/positions
   const clues = useMemo(() => [
-    { x: 0, y: 0, type: CLUE_TYPES.SQUARE, value: 4 },
-    { x: 4, y: 0, type: CLUE_TYPES.NUMBER, value: 9 },
-    { x: 2, y: 2, type: CLUE_TYPES.TALL, value: 3 },
-    { x: 3, y: 3, type: CLUE_TYPES.WIDE, value: 9 },
-    { x: 0, y: 4, type: CLUE_TYPES.ANY, value: 8 },
+    { x: 0, y: 0, type: CLUE_TYPES.SQUARE, color: 'orange', id: 1 },
+    { x: 5, y: 0, type: CLUE_TYPES.SQUARE, value: 9, color: 'green', id: 2 },
+    { x: 2, y: 2, type: CLUE_TYPES.TALL, value: 3, color: 'purple', id: 3 },
+    { x: 3, y: 3, type: CLUE_TYPES.SQUARE, value: 9, color: 'red', id: 4 },
+    { x: 0, y: 5, type: CLUE_TYPES.TALL, value: 8, color: 'blue', id: 5 },
+    { x: 5, y: 5, type: CLUE_TYPES.TALL, color: 'gold', id: 6 },
   ], []);
 
   useEffect(() => {
     if (validatePuzzle(gridSize, clues, zones)) {
-      if (!isWon) {
-        setIsWon(true);
-        const newProg = recordSolve('district-01');
-        setProgression(newProg);
-      }
+      setIsWon(true);
     } else {
       setIsWon(false);
     }
-  }, [zones, clues, gridSize, isWon]);
+  }, [zones, clues, gridSize]);
+
+  const handleUndo = () => {
+    setZones(prev => prev.slice(0, -1));
+  };
 
   const handleReset = () => {
     setZones([]);
@@ -38,62 +36,47 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-blueprint-base text-white font-sans p-8 flex flex-col items-center">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-light tracking-widest uppercase mb-2">Blueprint</h1>
-        <p className="text-blueprint-accent/80 font-mono text-sm tracking-tight">
-          District 01: The Outpost • 5x5 Site Survey
-        </p>
-      </header>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-[450px] bg-white rounded-2xl border border-patches-border p-6 flex flex-col items-center shadow-lg relative overflow-hidden">
 
-      <main className="flex flex-col items-center gap-8 max-w-2xl w-full">
-        <div className="relative">
+        <div className="mb-6 w-full">
           <Grid
             gridSize={gridSize}
             clues={clues}
             zones={zones}
             setZones={setZones}
           />
+        </div>
 
-          {isWon && (
-            <div className="absolute inset-0 bg-blueprint-accent/90 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500 z-10">
-              <h2 className="text-4xl font-bold mb-4">Construction Complete!</h2>
-              <p className="mb-6 opacity-90 text-center px-8">The Outpost has been successfully drafted. Progress saved to City Map.</p>
-              <button
-                onClick={handleReset}
-                className="bg-white text-blueprint-base px-8 py-3 rounded font-bold hover:bg-blueprint-light transition-colors"
-              >
-                Draft Next District
-              </button>
-            </div>
-          )}
+        <div className="flex gap-3 w-full mb-6">
+          <button
+            onClick={handleUndo}
+            disabled={zones.length === 0}
+            className="w-full py-3 px-4 bg-[#f0f0f0] text-patches-clue rounded-full font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#e0e0e0] transition-colors"
+          >
+            Undo
+          </button>
         </div>
 
         <Legend />
 
-        <DistrictView progression={progression} />
-
-        <div className="flex gap-4">
-          <button
-            onClick={handleReset}
-            className="px-6 py-2 border border-white/20 rounded hover:bg-white/5 transition-colors text-sm"
-          >
-            Clear Draft
-          </button>
-          <button
-            className="px-6 py-2 border border-white/20 rounded hover:bg-white/5 transition-colors text-sm opacity-50 cursor-not-allowed"
-          >
-            Request Survey Hint
-          </button>
-        </div>
-      </main>
-
-      {/* Decorative Blueprint Lines */}
-      <div className="fixed inset-0 pointer-events-none opacity-10">
-        <div className="absolute top-1/4 left-0 w-full h-px bg-white" />
-        <div className="absolute top-3/4 left-0 w-full h-px bg-white" />
-        <div className="absolute top-0 left-1/4 h-full w-px bg-white" />
-        <div className="absolute top-0 left-3/4 h-full w-px bg-white" />
+        {isWon && (
+          <div className="absolute inset-0 bg-white/95 flex flex-col items-center justify-center animate-in fade-in duration-300 z-10 px-6 text-center">
+            <div className="w-16 h-16 bg-patches-green rounded-full flex items-center justify-center mb-4 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Great job!</h2>
+            <p className="text-patches-clue mb-6">You've solved today's puzzle.</p>
+            <button
+              onClick={handleReset}
+              className="bg-black text-white px-8 py-3 rounded-full font-bold hover:opacity-80 transition-opacity"
+            >
+              Play Again
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

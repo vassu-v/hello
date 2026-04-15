@@ -7,11 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        blueprint: {
-          light: '#f0f4f8',
-          base: '#1a365d',
-          dark: '#102a43',
-          accent: '#63b3ed',
+        patches: {
+          bg: '#f3f6f8',
+          grid: '#ffffff',
+          border: '#e0e0e0',
+          clue: '#707070',
+          orange: '#ff8a00',
+          purple: '#a45cff',
+          green: '#2e8b57',
+          blue: '#00a3e0',
+          red: '#ef4444',
+          gold: '#c5a000',
+          shadow: 'rgba(0, 0, 0, 0.05)',
         }
       }
     },

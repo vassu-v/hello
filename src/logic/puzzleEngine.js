@@ -78,6 +78,17 @@ export function validatePuzzle(gridSize, clues, zones) {
 
   if (clues.length !== zones.length) return false;
 
+  // Each zone must contain exactly one clue
+  for (const zone of zones) {
+    const cluesInZone = clues.filter(c =>
+      c.x >= Math.min(zone.x1, zone.x2) &&
+      c.x <= Math.max(zone.x1, zone.x2) &&
+      c.y >= Math.min(zone.y1, zone.y2) &&
+      c.y <= Math.max(zone.y1, zone.y2)
+    );
+    if (cluesInZone.length !== 1) return false;
+  }
+
   for (const clue of clues) {
     const containingZone = zones.find(z =>
       clue.x >= Math.min(z.x1, z.x2) &&
