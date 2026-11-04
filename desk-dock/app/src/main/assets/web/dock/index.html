@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Desk Dock</title>
+<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/dock/dock.css">
+</head><body>
+<canvas id="sky"></canvas><canvas id="scene"></canvas><canvas id="fx"></canvas>
+<div id="shade"></div>
+<div id="ui">
+  <header><span id="place">—</span><span id="status"></span></header>
+  <section id="clock">
+    <div id="date"></div>
+    <div id="time"><span id="hh">--</span><span class="sep">:</span><span id="mm">--</span></div>
+  </section>
+  <section id="panel">
+    <div id="wxNow">
+      <span id="temp"></span>
+      <div><div id="condBig"></div><div id="hilo"></div></div>
+    </div>
+    <div id="slot"></div>
+  </section>
+  <footer><div id="ticker"></div><div id="dots"></div></footer>
+</div>
+<script src="/lib/suncalc.js"></script>
+<script src="/dock/sky.js"></script>
+<script src="/dock/scene.js"></script>
+<script src="/dock/dock.js"></script>
+</body></html>

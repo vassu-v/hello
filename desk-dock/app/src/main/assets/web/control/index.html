@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dock Remote</title>
+<style>
+:root{--bg:#0b0d10;--card:#151920;--fg:#e9edf2;--muted:#8a93a0;--accent:#4cc2ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;padding:16px;max-width:640px;margin:auto}
+h1{font-size:1.3rem}h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+section{background:var(--card);border-radius:12px;padding:14px;margin:12px 0}
+button{background:var(--accent);color:#000;border:0;border-radius:8px;padding:9px 14px;font-weight:600;margin:3px;cursor:pointer}
+button.ghost{background:#252b35;color:var(--fg)}
+input,select,textarea{background:#0b0d10;color:var(--fg);border:1px solid #2a313c;border-radius:8px;padding:8px;width:100%;margin:4px 0}
+label{display:block;font-size:.85rem;color:var(--muted);margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+li{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+#msg{color:var(--muted);font-size:.85rem;min-height:1em}
+</style></head><body>
+<h1>Desk Dock Remote</h1><div id="msg"></div>
+<section><h2>Screen</h2><div id="scr" class="muted"></div>
+  <button onclick="post('/api/screen/wake')">Wake</button><button class="ghost" onclick="post('/api/screen/sleep')">Sleep</button>
+  <label>Sleep timeout</label>
+  <select id="to" onchange="post('/api/screen/timeout',{timeout_seconds:+this.value})">
+    <option value="60">1 min</option><option value="120">2 min</option><option value="300">5 min</option>
+    <option value="1800">30 min (study)</option><option value="3600">60 min</option></select>
+  <label><input type="checkbox" id="rot" style="width:auto" onchange="post('/api/screen/rotate',{auto_rotate:this.checked})"> Auto-rotate</label>
+</section>
+<section><h2>Pomodoro</h2>
+  <button onclick="timer(25,'Focus')">Focus 25</button><button onclick="timer(50,'Deep work')">Deep 50</button>
+  <button class="ghost" onclick="timer(5,'Break')">Break 5</button><button class="ghost" onclick="post('/api/timer',{action:'stop'})">Stop</button>
+</section>
+<section><h2>Tasks</h2><ul id="tasks" style="padding:0;list-style:none"></ul>
+  <input id="nt" placeholder="New task…" onkeydown="if(event.key==='Enter'){post('/api/tasks',{text:this.value});this.value=''}">
+</section>
+<section><h2>Scene</h2>
+  <select id="scene" onchange="post('/api/settings',{scene:this.value})">
+    <option value="desk">Desk by the window</option><option value="mountains">Mountains</option>
+    <option value="sakura">Cherry blossom</option><option value="sky">Sky only</option></select>
+</section>
+<section><h2>Settings</h2>
+  <div class="grid">
+    <div><label>Pause charge at %</label><input id="pauseCap" type="number"></div>
+    <div><label>Resume charge at %</label><input id="resumeCap" type="number"></div>
+    <div><label>Pause above °C</label><input id="pauseTemp" type="number"></div>
+    <div><label>Resume below °C</label><input id="resumeTemp" type="number"></div>
+    <div><label>Night starts (hour)</label><input id="nightStart" type="number"></div>
+    <div><label>Night ends (hour)</label><input id="nightEnd" type="number"></div>
+    <div style="grid-column:1/-1"><label>City (search)</label><div style="display:flex;gap:6px"><input id="city" placeholder="e.g. Jaipur"><button onclick="findCity()">Find</button></div></div>
+    <div><label>Place label</label><input id="place"></div><div></div>
+    <div><label>Latitude</label><input id="lat" type="number" step="0.01"></div>
+    <div><label>Longitude</label><input id="lon" type="number" step="0.01"></div>
+  </div>
+  <label><input type="checkbox" id="guardEnabled" style="width:auto"> Built-in battery guard</label>
+  <label><input type="checkbox" id="hourlyWake" style="width:auto"> Hourly wake</label>
+  <label><input type="checkbox" id="quietHours" style="width:auto"> Quiet hours (no hourly wake at night)</label>
+  <label>Countdowns (one per line: <code>YYYY-MM-DD Label</code>)</label><textarea id="cds" rows="3"></textarea>
+  <button onclick="save()">Save settings</button>
+</section>
+<script>
+const q = new URLSearchParams(location.search);
+if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
+const TOKEN = localStorage.getItem("dockToken") || "";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const NUMS = ["pauseCap","resumeCap","pauseTemp","resumeTemp","nightStart","nightEnd"], BOOLS = ["guardEnabled","hourlyWake","quietHours"];
+
+async function api(path, body) {
+  const r = await fetch(path, { method: body === undefined ? "GET" : "POST", headers: { "X-Token": TOKEN }, body: body === undefined ? undefined : JSON.stringify(body) });
+  if (r.status === 401) { $("msg").textContent = "Bad token — open /control?token=XXXX (token is shown in adb logcat -s Dock)"; throw 0; }
+  return r.json();
+}
+async function post(p, b = {}) { await api(p, b); $("msg").textContent = "OK · " + new Date().toLocaleTimeString(); load(); }
+const timer = (m, l) => post("/api/timer", { action: "start", minutes: m, label: l });
+
+let loaded = false;
+async function load() {
+  const [st, scr] = await Promise.all([api("/api/state"), api("/api/screen/status")]);
+  $("scr").textContent = `${scr.wakefulness} · timeout ${scr.timeout_s}s · battery ${st.battery.capacity}% ${st.battery.temp_c}°C · guard ${st.battery.guard.mode}`;
+  $("to").value = scr.timeout_s; $("rot").checked = scr.auto_rotate;
+  $("tasks").innerHTML = st.tasks.map(t => `<li><label style="margin:0;color:inherit"><input type="checkbox" style="width:auto" ${t.done?"checked":""}
+    onchange="post('/api/tasks/${t.id}',{done:this.checked})"> ${esc(t.text)}</label>
+    <button class="ghost" onclick="post('/api/tasks/${t.id}',{delete:true})">✕</button></li>`).join("");
+  if (!loaded) {   // don't clobber fields while user is editing
+    const s = st.settings; loaded = true; $("scene").value = s.scene || "desk";
+    [...NUMS, "lat", "lon", "place"].forEach(k => $(k).value = s[k]); BOOLS.forEach(k => $(k).checked = s[k]);
+    $("cds").value = (s.countdowns || []).map(c => `${c.date} ${c.label}`).join("\n");
+  }
+}
+async function findCity() {
+  const r = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent($("city").value))).json();
+  const c = r.results?.[0]; if (!c) { $("msg").textContent = "City not found"; return; }
+  $("lat").value = c.latitude.toFixed(3); $("lon").value = c.longitude.toFixed(3); $("place").value = c.name;
+  $("msg").textContent = `${c.name}, ${c.country} — press Save`;
+}
+function save() {
+  const p = {}; NUMS.forEach(k => p[k] = +$(k).value); BOOLS.forEach(k => p[k] = $(k).checked);
+  p.place = $("place").value; p.lat = +$("lat").value; p.lon = +$("lon").value;
+  p.countdowns = $("cds").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => ({ date: l.slice(0, 10), label: l.slice(11) || "Untitled" }));
+  post("/api/settings", p);
+}
+load().catch(()=>{}); setInterval(() => load().catch(()=>{}), 5000);
+</script></body></html>

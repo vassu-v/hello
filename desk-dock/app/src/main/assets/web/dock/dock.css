@@ -1,0 +1,64 @@
+/* Built for reading at arm's length on a 6" 720p panel:
+   nothing under 13px, two weights of one sans + mono labels, three text levels only. */
+:root{--ink:#F7F4EE;--ink2:rgba(247,244,238,.8);--ink3:rgba(247,244,238,.6);--rule:rgba(247,244,238,.2);--accent:#FF7A3D;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 0 24px rgba(0,0,0,.35);
+  --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter Tight',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif}
+body.light{--accent:#B23A0C;--ink:#0D1824;--ink2:rgba(13,24,36,.8);--ink3:rgba(13,24,36,.6);--rule:rgba(13,24,36,.2);--shadow:0 0 20px rgba(255,255,255,.35)}
+body.standby{--ink:#FF5233;--ink2:rgba(255,82,51,.75);--ink3:rgba(255,82,51,.55);--rule:rgba(255,82,51,.2);--accent:#FF5233;--shadow:none}
+body.standby #sky,body.standby #scene,body.standby #fx{filter:brightness(.3) saturate(.5)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05070F;overflow:hidden;color:var(--ink);-webkit-font-smoothing:antialiased}
+#sky,#scene,#fx,#shade{position:fixed;inset:0;width:100%;height:100%;display:block}
+#shade{pointer-events:none;opacity:0;transition:opacity 2s;
+  background:linear-gradient(to top,rgba(3,5,10,.7) 0%,rgba(3,5,10,.35) 38%,rgba(3,5,10,0) 62%),
+             linear-gradient(to bottom,rgba(3,5,10,.35) 0%,rgba(3,5,10,0) 20%)}
+body.scene #shade{opacity:1}
+
+#ui{position:fixed;inset:0;padding:5.5vh 5vw 4.5vh;display:grid;column-gap:5vw;text-shadow:var(--shadow);
+  grid-template-columns:1fr minmax(240px,34%);grid-template-rows:auto 1fr auto;
+  grid-template-areas:"head head" "clock panel" "foot foot"}
+.mono{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em}
+
+header{grid-area:head;display:flex;gap:1.2em;align-items:baseline;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:13px}
+#place{font-weight:500}
+#status{color:var(--ink3)}
+
+#clock{grid-area:clock;align-self:end;min-height:0}
+#date{font-family:var(--serif);font-size:clamp(20px,7vh,30px);color:var(--ink2);margin:0 0 .1em .08em;line-height:1}
+#time{font-family:var(--sans);font-weight:300;font-size:min(50vh,25vw);line-height:.8;letter-spacing:-.045em;
+  font-feature-settings:"tnum" 1;margin-left:-.05em;white-space:nowrap}
+#time .sep{display:inline-block;color:var(--ink3);transform:translateY(-.07em);margin:0 -.01em}
+
+#panel{grid-area:panel;align-self:end;display:flex;flex-direction:column;gap:2.6vh;min-height:0;padding-bottom:1vh}
+#wxNow{display:flex;align-items:center;gap:14px}
+#temp{font-family:var(--sans);font-weight:300;font-size:min(17vh,11vw);line-height:.8;letter-spacing:-.04em;font-feature-settings:"tnum" 1}
+#condBig{font-family:var(--sans);font-weight:500;font-size:17px;line-height:1.2}
+#hilo{font-family:var(--sans);font-size:14px;color:var(--ink2);margin-top:3px;font-feature-settings:"tnum" 1}
+
+#slot{border-top:1px solid var(--rule);padding-top:2vh;display:grid;gap:1.4vh}
+.item .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--ink3);margin-bottom:4px}
+.item .v{font-family:var(--sans);font-size:17px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .v.big{font-size:30px;font-weight:300;letter-spacing:-.02em;font-feature-settings:"tnum" 1}
+.item .v small{font-size:13px;color:var(--ink2);margin-left:.3em}
+.hot{color:var(--accent)}
+
+footer{grid-area:foot;display:flex;justify-content:space-between;align-items:center;gap:1em;margin-top:3vh;padding-top:1.6vh;border-top:1px solid var(--rule)}
+#ticker{font-family:var(--sans);font-size:14px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .6s}
+#ticker b{color:var(--ink);font-weight:500}
+#ticker .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--ink3);margin-right:.9em}
+#ticker .seg{white-space:nowrap}
+#ticker .sepd{color:var(--ink3);margin:0 .7em}
+#dots{display:flex;gap:6px;flex:none}
+#dots i{width:5px;height:5px;border-radius:50%;background:var(--ink3);opacity:.5}
+#dots i.on{background:var(--ink);opacity:1}
+
+@media (orientation:portrait){
+  #ui{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;grid-template-areas:"head" "clock" "panel" "foot";padding:5vh 8vw 4vh}
+  #clock{align-self:start;margin-top:6vh}
+  #time{font-size:48vw;line-height:.8}
+  #time .sep{display:none}#time span{display:block}
+  #date{font-size:28px;margin-bottom:1.2vh}
+  #panel{align-self:end;gap:2vh}
+  #temp{font-size:20vw}
+  #ticker{white-space:normal;line-height:1.5}
+}
